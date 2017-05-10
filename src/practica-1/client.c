@@ -1,12 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
  * File:   client.c
- * Author: docencia
+ * Author: Iker Martín
  *
  * Created on March 8, 2017, 8:29 AM
  */
@@ -20,15 +14,8 @@
 #include <sys/wait.h> //waitpid
 #include <pthread.h> //threads
 
-
-
-/*
- *
- */
-
 int pidMonitor, threads;
 int seinales=0;
-
 
 void echo();
 void creaHilo();
@@ -36,27 +23,20 @@ void *func_hilo(void *arg);
 void cuentaSeinales();
 void echoCount();
 
-
-
-
 int main(int argc, char** argv) {
     int pidhijo1,pidhijo2, status;
     
-    int hilos;
-    
     pidMonitor=atoi(argv[1]);
+    
     printf("PidMonitor= %d \n", pidMonitor);
-    
-    signal(SIGUSR2,echo);
-    
-    
     printf("Padre con PID: %d\n",getpid());
+
+	signal(SIGUSR2,echo);
 
     printf("Pulsar cualquier tecla para ejecutar el ejercicio 1\n");
     getchar();
     kill(pidMonitor,SIGUSR1);
     sleep(5);
-
 
     printf("Pulsar cualquier tecla para ejecutar el ejercicio 2\n");
     getchar();
@@ -121,8 +101,7 @@ int main(int argc, char** argv) {
  
         exit(1);
     }
-    
-    return (EXIT_SUCCESS);
+      return (EXIT_SUCCESS);
 }
 
 void echo()
