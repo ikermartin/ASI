@@ -25,25 +25,24 @@
  * 
  */
 int main(int argc, char** argv) {
-    int s1, s2, s8;
+    int s1, s2, s8, s10;
     int shmid, semid, err, offset;
     char *segment;
     char input[BUFFSIZE];
     char buffer[BUFFSIZE];
 
-    printf("Práctica 4.\n-Pulse una tecla para ejecutar el ejercicio 1.\n");
+    printf("Práctica 4.\n---------------------\nPulse una tecla para ejecutar el ejercicio 1.\n");
     fgets(input, BUFFSIZE, stdin);
-
 
     shmid = shmget(KEY, SHMSIZE, 0666);
     if (shmid == -1) {
-        printf("Error al acceder a shm Saliendo del programa...\n ");
+        printf("Error al acceder a shm Saliendo del programa.\n ");
         exit(0);
     }
 
     segment = shmat(shmid, NULL, 0);
     if (segment == -1) {
-        printf("Error al engancharse a shm Saliendo del programa...\n ");
+        printf("Error al engancharse a shm Saliendo del programa.\n ");
         exit(0);
     }
 
@@ -59,18 +58,18 @@ int main(int argc, char** argv) {
     sleep(3);
     shmdt(segment);
 
-    printf("Pulse una tecla para ejecutar el ejercicio 2.\n");
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 2.\n");
     fgets(input, BUFFSIZE, stdin);
 
     shmid = shmget(KEY, SHMSIZE, IPC_CREAT | 0666);
     if (shmid == -1) {
-        printf("Error al acceder a shm Saliendo del programa...\n ");
+        printf("Error al acceder a shm Saliendo del programa.\n ");
         exit(0);
     }
 
     segment = shmat(shmid, NULL, 0);
     if (segment == -1) {
-        printf("Error al engancharse a shm Saliendo del programa...\n ");
+        printf("Error al engancharse a shm Saliendo del programa.\n ");
         exit(0);
     }
     sleep(1);
@@ -78,53 +77,102 @@ int main(int argc, char** argv) {
     strcpy(segment, secreto2);
     offset = atoi((secreto2 + 1)) + 16;
     sprintf(buffer, "<%d>", s1);
-    printf("Escribiendo cadena %s, con offset %d\n", buffer, offset);
+    printf("Escribiendo en MC cadena %s, con offset %d\n", buffer, offset);
 
     strcpy(segment + offset, buffer);
     shmdt(segment);
+    printf("Desenganchado de memoria compartida.\n");
 
-    printf("Pulse una tecla para ejecutar el ejercicio 3.\n");
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 3.\n");
     fgets(input, BUFFSIZE, stdin);
 
     semid = semget(KEY, 1, IPC_CREAT | 0666);
     err = semctl(semid, 0, SETVAL, 396);
+    printf("Semáforo creado e inicializado.\n");
 
-    sleep(5);
+    sleep(2);
 
     err = semctl(KEY, 0, IPC_RMID);
 
-    printf("Pulse una tecla para ejecutar el ejercicio 4.\n");
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 4.\n");
     fgets(input, BUFFSIZE, stdin);
 
     semid = semget(KEY, 2, IPC_CREAT | 0666);
     err = semctl(semid, 0, SETVAL, 1);
     err = semctl(semid, 1, SETVAL, 2);
+     printf("Semáforo doble creado e inicializado.\n");
 
     sleep(5);
-
-    printf("Pulse una tecla para ejecutar el ejercicio 5.\n");
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 5.\n");
     fgets(input, BUFFSIZE, stdin);
 
     struct sembuf up [1] = {
-        {0, 1, 0}};
+        {0, 1, 0}
+    };
     struct sembuf down [1] = {
-        {0, -1, 0}};
+        {0, -1, 0}
+    };
 
     semid = semget(KEY, 1, 0666);
+    printf("Id del semáforo obtenida.\n");
     shmid = shmget(KEY, SHMSIZE, 0666);
     segment = shmat(shmid, NULL, 0);
+    printf("Unido a memoria compartida.\n");
 
     SEMOP(semid, down);
+    printf("Dentro de la zona crítica.\n");
     s8 = *((int*) segment);
     printf("Secreto 8: <%d>\n", s8);
     *((int*) segment) = -s8;
     sleep(3);
     SEMOP(semid, up);
+    printf("Fuera de la zona crítica.\n");
 
     sleep(5);
-    // shmctl(shmid,IPC_RMID,NULL);
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 6.\n");
+    fgets(input, BUFFSIZE, stdin);
 
+    struct sembuf up2 [2] = {
+        {0, 1, 0},
+        {1, 1, 0}
+    };
+    struct sembuf down2 [2] = {
+        {0, -1, 0},
+        {1, -1, 0}
+    };
 
+    semid = semget(KEY, 2, 0666);
+    printf("Id del semáforo doble obtenida.\n");
+    shmid = shmget(KEY, SHMSIZE, 0666);
+    segment = shmat(shmid, NULL, 0);
+    printf("Unido a memoria compartida.\n");
+
+    SEMOP(semid, down2);
+    printf("Dentro de la zona crítica.\n");
+    s10 = *((int*) segment);
+    printf("Secreto 10: <%d>\n", s10);
+    *((int*) segment) = -s10;
+    sleep(3);
+    SEMOP(semid, up2);
+    printf("Fuera de la zona crítica.\n");
+
+    sleep(5);
+    printf("--------------------\nPulse una tecla para ejecutar el ejercicio 7.\n");
+    fgets(input, BUFFSIZE, stdin);
+
+    shmid = shmget(KEY, SHMSIZE, 0666);
+    segment = shmat(shmid, NULL, 0);
+    printf("Unido a memoria compartida.\n");
+    semid = semget(KEY, 1, IPC_CREAT | 0666);
+    err = semctl(semid, 0, SETVAL, 0);
+
+    SEMOP(semid, down);
+    printf("Dentro de la zona crítica.\n");
+    printf("Liberando recursos.\n");
+    err = shmctl(shmid, IPC_RMID, NULL);
+    printf("Memoria eliminada.\n");
+    err = semctl(semid, 0, IPC_RMID);
+    printf("Semáforo eliminado. Saliendo.\n");
 
     return (EXIT_SUCCESS);
 }
